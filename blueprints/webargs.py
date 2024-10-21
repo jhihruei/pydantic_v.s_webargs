@@ -29,3 +29,17 @@ def schema_hello_world(args):
     return jsonify(
         {"message": f"Hello {args['name']}, you are {args['age']} years old!"}
     )
+
+
+class AccountSchema(Schema):
+    username = fields.Str(required=True)
+    password = fields.Str(required=True)
+
+
+# Example: `curl "http://127.0.0.1:5000/w/query-string/password?username=account&password=pa55w0rd"`
+@webargs_blueprint.route("/query-string/password", methods=["GET"])
+@use_args(AccountSchema, location="query")  # 驗證 query 參數
+def password(args):
+    return jsonify(
+        {"message": f"Hello {args['username']}, your password is {args['password']}"}
+    )
