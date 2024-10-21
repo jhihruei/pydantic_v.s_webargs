@@ -9,6 +9,7 @@ class UserModel(BaseModel):
     age: int
 
 
+# Example: `curl "http://127.0.0.1:5000/p/query-string?name=Ray&age=18"`
 @pydantic_blueprint.route("/query-string", methods=["GET"])
 def hello_world():
     try:
