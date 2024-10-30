@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from flask import Blueprint, jsonify
 from marshmallow import Schema
@@ -81,5 +82,45 @@ def string_args_validate(args):
             "default_list": json.loads(args["default_list"]),
             "user_role": args["user_role"],
             "max_length": args["max_length"],
+        }
+    )
+
+
+bool_args = {
+    "default_bool": fields.Bool(load_default=False),
+    "allow_none": fields.Bool(allow_none=True, data_key="allowNone"),
+}
+
+
+# Example: `curl -d '{"allowNone": null}' -H "Content-Type: application/json" -X POST "http://127.0.0.1:5000/w/bool-args"`
+@webargs_blueprint.route("/bool-args", methods=["POST"])
+@use_args(bool_args)
+def bool_args_validate(args):
+    return jsonify(
+        {
+            "default_bool": args["default_bool"],
+            "allow_none": args["allow_none"],
+        }
+    )
+
+
+datetime_args = {
+    "default_min": fields.Bool(load_default=datetime.min),
+    "allow_none": fields.DateTime(required=True, allow_none=True),
+    "ymd": fields.DateTime("%Y/%m/%d"),
+    "default_format": fields.DateTime(required=True),  # ISO 8601
+}
+
+
+# Example: `curl -d '{"allow_none": null, "ymd": "2024/04/04", "default_format":"2024-04-04 00:00:00"}' -H "Content-Type: application/json" -X POST "http://127.0.0.1:5000/w/datetime-args"`
+@webargs_blueprint.route("/datetime-args", methods=["POST"])
+@use_args(datetime_args)
+def datetime_args_validate(args):
+    return jsonify(
+        {
+            "allow_none": args["allow_none"],
+            "default_min": args["default_min"],
+            "default_format": args["default_format"],
+            "ymd": args["ymd"],
         }
     )

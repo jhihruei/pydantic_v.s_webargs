@@ -1,9 +1,10 @@
 import json
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
 from flask import Blueprint, jsonify, request
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 
 pydantic_blueprint = Blueprint("pydantic_blueprint", __name__, url_prefix="/p")
 
@@ -83,5 +84,57 @@ def string_args_validate():
             }
         )
 
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+
+
+class BoolModel(BaseModel):
+    default_bool: bool = False
+    allow_none: bool | None = Field(alias="allowNone")
+
+
+# Example: `curl -d '{"allowNone": null}' -H "Content-Type: application/json" -X POST "http://127.0.0.1:5000/p/bool-args"`
+@pydantic_blueprint.route("/bool-args", methods=["POST"])
+def bool_args_validate():
+    try:
+        # 驗證 JSON 資料
+        args = BoolModel(**request.json)
+        return jsonify(
+            {
+                "default_bool": args.default_bool,
+                "allow_none": args.allow_none,
+            }
+        )
+
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+
+
+class DatetimeModel(BaseModel):
+    default_min: datetime = datetime.min
+    allow_none: datetime | None
+    ymd: datetime
+    default_format: datetime
+
+    # NOTE: validator 應該還有其他做法
+    @validator("ymd", pre=True)
+    def parse_birthdate(cls, value):
+        return datetime.strptime(value, "%Y/%m/%d").date()
+
+
+# Example: `curl -d '{"allow_none": null, "ymd": "2024/04/04", "default_format":"2024-04-04 00:00:00"}' -H "Content-Type: application/json" -X POST "http://127.0.0.1:5000/p/datetime-args"`
+@pydantic_blueprint.route("/datetime-args", methods=["POST"])
+def datetime_args_validate():
+    try:
+        # 驗證 JSON 資料
+        args = DatetimeModel(**request.json)
+        return jsonify(
+            {
+                "allow_none": args.allow_none,
+                "default_min": args.default_min,
+                "default_format": args.default_format,
+                "ymd": args.ymd,
+            }
+        )
     except ValidationError as e:
         return jsonify(e.errors()), 400
